@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SSE subscription</title>
+    <meta charset="utf-8">
+    <style>
+        h1{
+            text-align: center;
+            margin-bottom: 75px;
+        }
+
+        .title {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        #row {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+
+        .col {
+            border: 2px solid black;
+            width: 50%;
+        }
+
+        .col h2 {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .status {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: white;
+            padding: 0.2em 0.5em;
+        }
+
+        .completed {
+            background-color: green;
+        }
+
+        .pending {
+            background-color: orange;
+        }
+
+        .failed {
+            background-color: red;
+        }
+    </style>
+</head>·
+<body>
+<h1>SSE subscription</h1>
+<div id="row">
+    <div class="col">
+        <h2>Completed orders</h2>
+        <ul id="sse-data-completed"></ul>
+    </div>
+    <div class="col">
+        <h2>Failed orders</h2>
+        <ul  id="sse-data-failed"></ul>
+    </div>
+</div>
+
+<script>
+    const addEventElement = (data, id) => {
+        const sseDataElement = document.getElementById(id);
+        sseDataElement.innerHTML += `<li>
+            <p class="title">Order n°${data.orderNumber}</p>
+            <p>Order status: <span class="status ${data.orderStatus}">${data.orderStatus}</span></p>
+        </li>`;
+    }
+
+    const completedOrderEvents = new EventSource("http://localhost:4000/sse/orders/completed");
+    completedOrderEvents.addEventListener('message', (event) => {
+        const eventData = JSON.parse(event.data);
+        addEventElement(eventData, 'sse-data-completed');
+    });
+
+    completedOrderEvents.addEventListener('error', (error) => {
+        console.log('SSE error on completed orders', error)
+    });
+
+    const failedOrderEvents = new EventSource("http://localhost:4000/sse/orders/failed");
+    failedOrderEvents.addEventListener('message', (event) => {
+        const eventData = JSON.parse(event.data);
+        addEventElement(eventData, 'sse-data-failed');
+    });
+
+    failedOrderEvents.addEventListener('error', (error) => {
+        console.log('SSE error on failed orders', error)
+    });
+</script>
+</body>
+</html>

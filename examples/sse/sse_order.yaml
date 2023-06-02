@@ -1,0 +1,52 @@
+event:
+  format: json
+  fields:
+    - name: customerId
+      data_type: string
+      required: true
+    - name: orderNumber
+      data_type: int
+      required: true
+    - name: orderStatus
+      data_type: string
+      required: true
+    - name: nonRequiredField
+      data_type: string
+
+inputs:
+  - name: webhook-orders
+    source: webhook
+    params:
+      endpoint: /webhook/orders
+    decoder:
+      format: json
+      mappers:
+        - source: o_customer_id
+          target: customerId
+        - source: o_number
+          target: orderNumber
+        - source: o_status
+          target: orderStatus
+
+outputs:
+  - name: sse-orders-completed
+    destination: sse
+    params:
+      endpoint: /sse/orders/completed
+    condition:
+      operator: or
+      conditions:
+        - field: orderStatus
+          operator: eq
+          value: "completed"
+        - field: orderStatus
+          operator: eq
+          value: "pending"
+  - name: sse-orders-failed
+    destination: sse
+    params:
+      endpoint: /sse/orders/failed
+    condition:
+      field: orderStatus
+      operator: eq
+      value: "failed"
